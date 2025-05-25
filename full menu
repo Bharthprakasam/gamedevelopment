@@ -1,0 +1,166 @@
+import pygame
+import sys
+
+pygame.init()
+
+WIDTH, HEIGHT = 480, 800
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Pygame Mobile Menu Example")
+
+# Colors
+WHITE = (255, 255, 255)
+GRAY = (180, 180, 180)
+DARKGRAY = (100, 100, 100)
+BLACK = (0, 0, 0)
+BLUE = (0, 120, 215)
+LIGHTBLUE = (0, 170, 255)
+RED = (220, 20, 60)
+GREEN = (34, 177, 76)
+
+font = pygame.font.SysFont(None, 36)
+small_font = pygame.font.SysFont(None, 24)
+
+class Button:
+    def __init__(self, x, y, w, h, text, color=GRAY, text_color=BLACK):
+        self.rect = pygame.Rect(x, y, w, h)
+        self.text = text
+        self.color = color
+        self.text_color = text_color
+        self.pressed = False
+
+    def draw(self, surface):
+        pygame.draw.rect(surface, self.color, self.rect, border_radius=8)
+        txt_surface = font.render(self.text, True, self.text_color)
+        txt_rect = txt_surface.get_rect(center=self.rect.center)
+        surface.blit(txt_surface, txt_rect)
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.rect.collidepoint(event.pos):
+                self.pressed = True
+                self.color = LIGHTBLUE
+                print(f"{self.text} button pressed")
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if self.pressed:
+                self.pressed = False
+                self.color = GRAY
+                if self.rect.collidepoint(event.pos):
+                    return True
+        return False
+
+class HamburgerMenu:
+    def __init__(self, x, y, size=30):
+        self.rect = pygame.Rect(x, y, size, size)
+        self.open = False
+        self.options = ["Profile", "Saved Games", "About", "FAQ"]
+        self.option_rects = []
+        self.option_height = 40
+        self.width = 140
+        self.bg_color = DARKGRAY
+        self.text_color = WHITE
+
+    def draw(self, surface):
+        bar_width = self.rect.width * 0.7
+        bar_height = 4
+        gap = 6
+        start_x = self.rect.x + (self.rect.width - bar_width) / 2
+        start_y = self.rect.y + (self.rect.height - (bar_height*3 + gap*2)) / 2
+
+        for i in range(3):
+            pygame.draw.rect(surface, BLACK, 
+                             (start_x, start_y + i*(bar_height + gap), bar_width, bar_height), border_radius=2)
+
+        if self.open:
+            dropdown_rect = pygame.Rect(self.rect.x - self.width + self.rect.width, 
+                                        self.rect.bottom, self.width, self.option_height * len(self.options))
+            pygame.draw.rect(surface, self.bg_color, dropdown_rect, border_radius=8)
+
+            self.option_rects.clear()
+            for i, option in enumerate(self.options):
+                option_rect = pygame.Rect(dropdown_rect.x, dropdown_rect.y + i*self.option_height, self.width, self.option_height)
+                self.option_rects.append(option_rect)
+                mouse_pos = pygame.mouse.get_pos()
+                if option_rect.collidepoint(mouse_pos):
+                    pygame.draw.rect(surface, LIGHTBLUE, option_rect)
+                else:
+                    pygame.draw.rect(surface, self.bg_color, option_rect)
+
+                txt_surface = small_font.render(option, True, self.text_color)
+                txt_rect = txt_surface.get_rect(center=option_rect.center)
+                surface.blit(txt_surface, txt_rect)
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.rect.collidepoint(event.pos):
+                self.open = not self.open
+                return None
+            if self.open:
+                for i, option_rect in enumerate(self.option_rects):
+                    if option_rect.collidepoint(event.pos):
+                        print(f"Selected menu option: {self.options[i]}")
+                        self.open = False
+                        return self.options[i]
+                self.open = False
+        return None
+
+
+def main():
+    clock = pygame.time.Clock()
+
+    # Hamburger menu top-right corner
+    hamburger_size = 30
+    hamburger = HamburgerMenu(WIDTH - hamburger_size - 10, 10, hamburger_size)
+
+    # Middle screen buttons: Play, Pause, Exit
+    middle_button_width = 100
+    middle_button_height = 60
+    play_button = Button(WIDTH // 2 - middle_button_width - 10, HEIGHT // 2 - middle_button_height // 2, middle_button_width, middle_button_height, "Play", color=GREEN, text_color=WHITE)
+    pause_button = Button(WIDTH // 2 + 10, HEIGHT // 2 - middle_button_height // 2, middle_button_width, middle_button_height, "Pause", color=BLUE, text_color=WHITE)
+    exit_button = Button(WIDTH // 2 - middle_button_width//2, HEIGHT // 2 + middle_button_height + 20, middle_button_width, middle_button_height, "Exit", color=RED, text_color=WHITE)
+
+    running = True
+    while running:
+        screen.fill(WHITE)
+
+        # Draw menu bar background (top) for hamburger menu area only
+        pygame.draw.rect(screen, DARKGRAY, (WIDTH - hamburger_size - 20, 0, hamburger_size + 20, hamburger_size + 20))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+            # Handle hamburger menu
+            selected_option = hamburger.handle_event(event)
+            if selected_option:
+                print(f"User selected: {selected_option}")
+
+            # Handle middle buttons
+            if play_button.handle_event(event):
+                print("Play pressed")
+            if pause_button.handle_event(event):
+                print("Pause pressed")
+            if exit_button.handle_event(event):
+                print("Exit pressed - quitting")
+                running = False
+
+        # Draw hamburger menu
+        hamburger.draw(screen)
+
+        # Draw middle buttons
+        play_button.draw(screen)
+        pause_button.draw(screen)
+        exit_button.draw(screen)
+
+        # Bottom right text
+        text_surface = small_font.render("Game by Bharath", True, BLACK)
+        text_rect = text_surface.get_rect(bottomright=(WIDTH - 10, HEIGHT - 10))
+        screen.blit(text_surface, text_rect)
+
+        pygame.display.flip()
+        clock.tick(60)
+
+    pygame.quit()
+    sys.exit()
+
+if __name__ == "__main__":
+    main()
