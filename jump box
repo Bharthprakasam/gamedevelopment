@@ -1,0 +1,43 @@
+import pygame
+pygame.init()
+
+win = pygame.display.set_mode((600, 400))
+clock = pygame.time.Clock()
+
+player = pygame.Rect(50, 300, 50, 50)
+ground = pygame.Rect(0, 350, 600, 50)
+vel_y = 0
+on_ground = False
+
+run = True
+while run:
+    for e in pygame.event.get():
+        if e.type == pygame.QUIT:
+            run = False
+
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]:
+        player.x -= 5
+    if keys[pygame.K_RIGHT]:
+        player.x += 5
+    if keys[pygame.K_SPACE] and on_ground:
+        vel_y = -12
+        on_ground = False
+
+    # Gravity
+    vel_y += 1
+    player.y += vel_y
+
+    # Ground collision
+    if player.colliderect(ground):
+        player.y = ground.y - player.height
+        vel_y = 0
+        on_ground = True
+
+    win.fill((30, 30, 30))
+    pygame.draw.rect(win, (0, 200, 200), player)
+    pygame.draw.rect(win, (0, 255, 0), ground)
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()
