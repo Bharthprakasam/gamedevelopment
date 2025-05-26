@@ -1,0 +1,70 @@
+1. Install Snort
+
+sudo apt update
+sudo apt install snort -y
+
+> During install, set your home network (e.g., 192.168.1.0/24)
+
+
+
+
+---
+
+2. Add a Detection Rule
+
+sudo nano /etc/snort/rules/local.rules
+
+Add:
+
+alert icmp any any -> any any (msg:"Ping detected"; sid:1000001;)
+
+
+---
+
+3. Run Snort
+
+sudo snort -A console -q -c /etc/snort/snort.conf -i eth0
+
+(Replace eth0 with your interface: run ip a to check)
+
+Now in another terminal:
+
+ping <your-IP>
+
+You’ll see an alert in Snort output: "Ping detected"
+
+
+---
+
+4. Block IP with iptables (manually)
+
+sudo iptables -A INPUT -s <attacker-IP> -j DROP
+
+> Example:
+
+
+
+sudo iptables -A INPUT -s 192.168.1.10 -j DROP
+
+
+---
+
+5. Check Blocked IPs
+
+sudo iptables -L -n
+
+
+---
+
+6. Remove Block
+
+sudo iptables -D INPUT 1
+
+> (Replace 1 with the correct line number)
+
+
+
+
+---
+
+Let me know if you want to auto-block based on alerts — I can give you a short 3-line script for that too!
